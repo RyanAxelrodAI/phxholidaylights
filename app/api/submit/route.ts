@@ -33,5 +33,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // Send Slack notification
+  const slackWebhook = process.env.SLACK_WEBHOOK_URL
+  if (slackWebhook) {
+    const submitter = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous'
+    const emailStr = typeof email === 'string' && email.trim() ? email.trim() : 'Not provided'
+    const descStr = typeof description === 'string' && description.trim() ? description.trim() : 'No description'
+
+    await fetch(slackWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: '🎄 *New Holiday Light Submission!*',
+        blocks: [
+          {
+            type: 'header',
+            text: { type: 'plain_text', text: '🎄 New Holiday Light Submission!' },
+          },
+          {
+            type: 'section',
+            fields: [
+              { type: 'mrkdwn', text: `*Address:*\n${address.trim()}` },
+              { type: 'mrkdwn', text: `*Submitted by:*\n${submitter}` },
+              { type: 'mrkdwn', text: `*Email:*\n${emailStr}` },
+              { type: 'mrkdwn', text: `*Description:*\n${descStr}` },
+            ],
+          },
+          {
+            type: 'section',
+            text: { type: 'mrkdwn', text: `*Review it:* ${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.phxholidaylights.com'}/admin?key=${process.env.ADMIN_SECRET_KEY}` },
+          },
+        ],
+      }),
+    }).catch(() => {}) // Don't fail the submission if Slack is down
+  }
+
   return NextResponse.json({ success: true }, { status: 201 })
 }
