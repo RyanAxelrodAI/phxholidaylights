@@ -75,5 +75,5 @@ export async function POST(req: NextRequest) {
     slackStatus = await postToSlack(webhookUrl, text)
   }
 
-  return NextResponse.json({ success: true, slackStatus }, { status: 201 })
+  return NextResponse.json({ success: true }, { status: 201 })
 }
