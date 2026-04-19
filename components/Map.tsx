@@ -13,6 +13,7 @@ import type { Location } from '@/lib/types'
 import FeedbackModal from './FeedbackModal'
 
 const PHOENIX_CENTER = { lat: 33.4484, lng: -111.9 }
+const NEAR_ME_RADIUS_MILES = 10
 
 const DARK_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#1a2e1a' }] },
@@ -29,8 +30,27 @@ const DARK_MAP_STYLE = [
   { featureType: 'poi', stylers: [{ visibility: 'simplified' }] },
 ]
 
-// Pans map when selectedLocation changes
-function MapPanner({ location }: { location: Location | null }) {
+// Haversine distance in miles
+function distanceMiles(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 3958.8
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+// Pans map when selectedLocation or userCoords changes
+function MapPanner({
+  location,
+  userCoords,
+}: {
+  location: Location | null
+  userCoords: { lat: number; lng: number } | null
+}) {
   const map = useMap()
   useEffect(() => {
     if (map && location) {
@@ -38,6 +58,14 @@ function MapPanner({ location }: { location: Location | null }) {
       map.setZoom(15)
     }
   }, [map, location])
+
+  useEffect(() => {
+    if (map && userCoords && !location) {
+      map.panTo(userCoords)
+      map.setZoom(12)
+    }
+  }, [map, userCoords, location])
+
   return null
 }
 
@@ -47,9 +75,10 @@ interface MarkerWithInfoProps {
   selected: boolean
   onClose: () => void
   onFeedback: (loc: Location) => void
+  distanceLabel?: string
 }
 
-function LocationMarker({ location, onClick, selected, onClose, onFeedback }: MarkerWithInfoProps) {
+function LocationMarker({ location, onClick, selected, onClose, onFeedback, distanceLabel }: MarkerWithInfoProps) {
   const [markerRef, marker] = useAdvancedMarkerRef()
 
   return (
@@ -64,15 +93,16 @@ function LocationMarker({ location, onClick, selected, onClose, onFeedback }: Ma
       </AdvancedMarker>
 
       {selected && marker && (
-        <InfoWindow
-          anchor={marker}
-          onCloseClick={onClose}
-          headerDisabled
-        >
+        <InfoWindow anchor={marker} onCloseClick={onClose} headerDisabled>
           <div className="bg-holiday-green-dark text-white rounded-xl overflow-hidden min-w-[220px] max-w-[280px]">
             <div className="bg-holiday-green px-4 py-3 flex items-start gap-2">
               <span className="text-lg flex-shrink-0 mt-0.5">📍</span>
-              <p className="text-sm font-semibold leading-snug">{location.address}</p>
+              <div>
+                <p className="text-sm font-semibold leading-snug">{location.address}</p>
+                {distanceLabel && (
+                  <p className="text-xs text-white/60 mt-0.5">📏 {distanceLabel}</p>
+                )}
+              </div>
             </div>
             {location.description && (
               <p className="px-4 py-3 text-sm text-white/80 leading-relaxed border-t border-white/10">
@@ -80,9 +110,7 @@ function LocationMarker({ location, onClick, selected, onClose, onFeedback }: Ma
               </p>
             )}
             {location.date_added && (
-              <p className="px-4 pb-2 text-xs text-white/40">
-                Added {location.date_added}
-              </p>
+              <p className="px-4 pb-2 text-xs text-white/40">Added {location.date_added}</p>
             )}
             <div className="px-4 py-3 border-t border-white/10 space-y-2">
               <a
@@ -116,50 +144,96 @@ export default function MapView({ locations }: MapViewProps) {
   const [feedbackLocation, setFeedbackLocation] = useState<Location | null>(null)
   const [showList, setShowList] = useState(false)
   const [search, setSearch] = useState('')
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null)
+  const [nearMeActive, setNearMeActive] = useState(false)
+  const [geoError, setGeoError] = useState<string | null>(null)
+  const [geoLoading, setGeoLoading] = useState(false)
   const activeItemRef = useRef<HTMLButtonElement>(null)
 
-  const handleMarkerClick = useCallback((loc: Location) => {
-    setSelectedLocation(loc)
-  }, [])
-
-  const handleInfoClose = useCallback(() => {
-    setSelectedLocation(null)
-  }, [])
-
+  const handleMarkerClick = useCallback((loc: Location) => setSelectedLocation(loc), [])
+  const handleInfoClose = useCallback(() => setSelectedLocation(null), [])
   const handleFeedback = useCallback((loc: Location) => {
     setFeedbackLocation(loc)
     setSelectedLocation(null)
   }, [])
-
   const handleListClick = useCallback((loc: Location) => {
     setSelectedLocation(loc)
-    // On mobile, close the list so the marker popup is visible
     if (window.innerWidth < 768) setShowList(false)
   }, [])
 
-  // Scroll active item into view when selected from map
   useEffect(() => {
     if (selectedLocation && activeItemRef.current) {
       activeItemRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
     }
   }, [selectedLocation])
 
-  const filtered = locations.filter(loc =>
-    loc.address.toLowerCase().includes(search.toLowerCase()) ||
-    (loc.description ?? '').toLowerCase().includes(search.toLowerCase())
-  )
+  function handleNearMe() {
+    if (nearMeActive) {
+      // Toggle off
+      setNearMeActive(false)
+      setUserCoords(null)
+      setGeoError(null)
+      return
+    }
+    if (!navigator.geolocation) {
+      setGeoError('Geolocation not supported by your browser.')
+      return
+    }
+    setGeoLoading(true)
+    setGeoError(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setNearMeActive(true)
+        setGeoLoading(false)
+        setShowList(true)
+        setSearch('')
+      },
+      () => {
+        setGeoError('Location access denied. Please allow location in your browser.')
+        setGeoLoading(false)
+      },
+      { timeout: 10000 }
+    )
+  }
 
-  // Group by city (address format: "street, city, state zip")
+  // Build list: filter by search, optionally by proximity, then sort
+  const withDistance = locations.map(loc => ({
+    ...loc,
+    distance: userCoords ? distanceMiles(userCoords.lat, userCoords.lng, loc.lat, loc.lng) : null,
+  }))
+
+  const filtered = withDistance
+    .filter(loc => {
+      const matchesSearch =
+        loc.address.toLowerCase().includes(search.toLowerCase()) ||
+        (loc.description ?? '').toLowerCase().includes(search.toLowerCase())
+      const withinRadius = nearMeActive && loc.distance !== null ? loc.distance <= NEAR_ME_RADIUS_MILES : true
+      return matchesSearch && withinRadius
+    })
+    .sort((a, b) => {
+      if (nearMeActive && a.distance !== null && b.distance !== null) {
+        return a.distance - b.distance
+      }
+      return 0
+    })
+
+  // Group by city unless Near Me is active (then show flat sorted list)
   const getCity = (address: string) => address.split(', ')[1] ?? 'Other'
 
-  const groupedByCity = filtered.reduce<Record<string, Location[]>>((acc, loc) => {
-    const city = getCity(loc.address)
-    if (!acc[city]) acc[city] = []
-    acc[city].push(loc)
-    return acc
-  }, {})
+  const groupedByCity = !nearMeActive
+    ? filtered.reduce<Record<string, typeof filtered>>((acc, loc) => {
+        const city = getCity(loc.address)
+        if (!acc[city]) acc[city] = []
+        acc[city].push(loc)
+        return acc
+      }, {})
+    : {}
 
   const sortedCities = Object.keys(groupedByCity).sort()
+
+  const formatDistance = (d: number) =>
+    d < 1 ? `${(d * 5280).toFixed(0)} ft` : `${d.toFixed(1)} mi`
 
   return (
     <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
@@ -178,20 +252,44 @@ export default function MapView({ locations }: MapViewProps) {
         >
           <div className="flex flex-col h-full w-80">
             {/* Header */}
-            <div className="px-4 pt-4 pb-3 border-b border-holiday-green/20 flex-shrink-0">
-              <div className="flex items-center justify-between mb-3">
+            <div className="px-4 pt-4 pb-3 border-b border-holiday-green/20 flex-shrink-0 space-y-2">
+              <div className="flex items-center justify-between">
                 <h2 className="text-white font-semibold text-sm">
-                  🎄 All Locations
-                  <span className="ml-2 text-white/40 font-normal">({locations.length})</span>
+                  🎄 {nearMeActive ? 'Near Me' : 'All Locations'}
+                  <span className="ml-2 text-white/40 font-normal">({filtered.length})</span>
                 </h2>
                 <button
                   onClick={() => setShowList(false)}
                   className="text-white/40 hover:text-white transition-colors text-lg leading-none"
-                  aria-label="Close list"
                 >
                   ✕
                 </button>
               </div>
+
+              {/* Near Me button */}
+              <button
+                onClick={handleNearMe}
+                disabled={geoLoading}
+                className={`w-full flex items-center justify-center gap-2 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  nearMeActive
+                    ? 'bg-holiday-green text-white'
+                    : 'bg-white/10 hover:bg-white/20 text-white/80'
+                }`}
+              >
+                {geoLoading ? (
+                  <span className="animate-pulse">Locating…</span>
+                ) : (
+                  <>
+                    <span>📍</span>
+                    {nearMeActive ? `Within ${NEAR_ME_RADIUS_MILES} miles — tap to clear` : 'Near Me'}
+                  </>
+                )}
+              </button>
+
+              {geoError && (
+                <p className="text-xs text-holiday-red leading-snug">{geoError}</p>
+              )}
+
               <input
                 type="text"
                 placeholder="Search locations…"
@@ -204,16 +302,44 @@ export default function MapView({ locations }: MapViewProps) {
             {/* List */}
             <div className="flex-1 overflow-y-auto">
               {filtered.length === 0 ? (
-                <p className="text-white/40 text-sm text-center mt-8 px-4">No locations match your search.</p>
+                <p className="text-white/40 text-sm text-center mt-8 px-4">
+                  {nearMeActive ? `No displays within ${NEAR_ME_RADIUS_MILES} miles.` : 'No locations match your search.'}
+                </p>
+              ) : nearMeActive ? (
+                // Flat sorted list when Near Me is active
+                filtered.map(loc => {
+                  const isActive = selectedLocation?.id === loc.id
+                  const street = loc.address.split(', ')[0]
+                  const city = getCity(loc.address)
+                  return (
+                    <button
+                      key={loc.id}
+                      ref={isActive ? activeItemRef : null}
+                      onClick={() => handleListClick(loc)}
+                      className={`w-full text-left px-4 py-2 border-b border-white/10 transition-colors ${isActive ? 'bg-holiday-green/25 border-l-2 border-l-holiday-green' : 'hover:bg-white/5'}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm text-white leading-tight">{street}</p>
+                          <p className="text-xs text-white/40 mt-0.5">{city}</p>
+                        </div>
+                        {loc.distance !== null && (
+                          <span className="text-xs text-holiday-green/80 whitespace-nowrap flex-shrink-0 mt-0.5">
+                            {formatDistance(loc.distance)}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })
               ) : (
+                // Grouped by city
                 sortedCities.map(city => (
                   <div key={city}>
-                    {/* City header */}
                     <div className="sticky top-0 z-10 px-4 py-1.5 bg-holiday-dark/95 backdrop-blur border-b border-holiday-green/20 flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-widest text-holiday-green/80">{city}</span>
                       <span className="text-xs text-white/30">{groupedByCity[city].length}</span>
                     </div>
-                    {/* Locations under this city */}
                     {groupedByCity[city].map(loc => {
                       const isActive = selectedLocation?.id === loc.id
                       const street = loc.address.split(', ')[0]
@@ -240,14 +366,7 @@ export default function MapView({ locations }: MapViewProps) {
           {/* Toggle button */}
           <button
             onClick={() => setShowList(v => !v)}
-            className={`
-              absolute top-4 z-10 flex items-center gap-2
-              bg-holiday-dark/90 hover:bg-holiday-dark border border-holiday-green/40
-              text-white text-sm font-medium px-3 py-2 rounded-lg shadow-lg
-              transition-all duration-300
-              ${showList ? 'left-4' : 'left-4'}
-            `}
-            aria-label="Toggle location list"
+            className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-holiday-dark/90 hover:bg-holiday-dark border border-holiday-green/40 text-white text-sm font-medium px-3 py-2 rounded-lg shadow-lg transition-all duration-300"
           >
             {showList ? '◀ Hide List' : '☰ View All'}
           </button>
@@ -261,17 +380,29 @@ export default function MapView({ locations }: MapViewProps) {
             gestureHandling="greedy"
             className="w-full h-full"
           >
-            <MapPanner location={selectedLocation} />
-            {locations.map((loc) => (
-              <LocationMarker
-                key={loc.id}
-                location={loc}
-                onClick={handleMarkerClick}
-                selected={selectedLocation?.id === loc.id}
-                onClose={handleInfoClose}
-                onFeedback={handleFeedback}
-              />
-            ))}
+            <MapPanner location={selectedLocation} userCoords={nearMeActive ? userCoords : null} />
+
+            {/* User location marker */}
+            {userCoords && (
+              <AdvancedMarker position={userCoords} title="You are here">
+                <div className="w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow-lg" />
+              </AdvancedMarker>
+            )}
+
+            {locations.map((loc) => {
+              const d = userCoords ? distanceMiles(userCoords.lat, userCoords.lng, loc.lat, loc.lng) : null
+              return (
+                <LocationMarker
+                  key={loc.id}
+                  location={loc}
+                  onClick={handleMarkerClick}
+                  selected={selectedLocation?.id === loc.id}
+                  onClose={handleInfoClose}
+                  onFeedback={handleFeedback}
+                  distanceLabel={d !== null ? formatDistance(d) : undefined}
+                />
+              )
+            })}
           </Map>
 
           {locations.length === 0 && (
@@ -287,10 +418,7 @@ export default function MapView({ locations }: MapViewProps) {
       </div>
 
       {feedbackLocation && (
-        <FeedbackModal
-          location={feedbackLocation}
-          onClose={() => setFeedbackLocation(null)}
-        />
+        <FeedbackModal location={feedbackLocation} onClose={() => setFeedbackLocation(null)} />
       )}
     </APIProvider>
   )
