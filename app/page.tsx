@@ -2,6 +2,8 @@ import dynamic from 'next/dynamic'
 import NavBar from '@/components/NavBar'
 import { getLocationsFromSheet } from '@/lib/getLocations'
 
+const AddToHomeScreen = dynamic(() => import('@/components/AddToHomeScreen'), { ssr: false })
+
 const MapView = dynamic(() => import('@/components/Map'), {
   ssr: false,
   loading: () => (
@@ -23,6 +25,7 @@ export default async function HomePage() {
     <main className="relative w-screen h-screen overflow-hidden">
       <NavBar />
       <MapView locations={locations} />
+      <AddToHomeScreen />
 
       {/* Bottom pill — location count */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
