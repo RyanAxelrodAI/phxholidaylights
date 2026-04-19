@@ -10,7 +10,18 @@ import {
   useMap,
 } from '@vis.gl/react-google-maps'
 import type { Location } from '@/lib/types'
+import { isNewLocation } from '@/lib/isNew'
 import FeedbackModal from './FeedbackModal'
+
+function NewBadge({ className = '' }: { className?: string }) {
+  return (
+    <span
+      className={`inline-block text-[9px] font-bold uppercase tracking-wider bg-holiday-red text-white px-1.5 py-0.5 rounded ${className}`}
+    >
+      New
+    </span>
+  )
+}
 
 const PHOENIX_CENTER = { lat: 33.4484, lng: -111.9 }
 const NEAR_ME_RADIUS_MILES = 10
@@ -98,7 +109,10 @@ function LocationMarker({ location, onClick, selected, onClose, onFeedback, dist
             <div className="bg-holiday-green px-4 py-3 flex items-start gap-2">
               <span className="text-lg flex-shrink-0 mt-0.5">📍</span>
               <div>
-                <p className="text-sm font-semibold leading-snug">{location.address}</p>
+                <p className="text-sm font-semibold leading-snug">
+                  {location.address}
+                  {isNewLocation(location.date_added) && <NewBadge className="ml-1.5 align-middle" />}
+                </p>
                 {distanceLabel && (
                   <p className="text-xs text-white/60 mt-0.5">📏 {distanceLabel}</p>
                 )}
@@ -320,7 +334,10 @@ export default function MapView({ locations }: MapViewProps) {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-sm text-white leading-tight">{street}</p>
+                          <p className="text-sm text-white leading-tight">
+                            {street}
+                            {isNewLocation(loc.date_added) && <NewBadge className="ml-1.5 align-middle" />}
+                          </p>
                           <p className="text-xs text-white/40 mt-0.5">{city}</p>
                         </div>
                         {loc.distance !== null && (
@@ -350,7 +367,10 @@ export default function MapView({ locations }: MapViewProps) {
                           onClick={() => handleListClick(loc)}
                           className={`w-full text-left px-4 py-1.5 border-b border-white/10 transition-colors ${isActive ? 'bg-holiday-green/25 border-l-2 border-l-holiday-green' : 'hover:bg-white/5'}`}
                         >
-                          <p className="text-sm text-white leading-tight">{street}</p>
+                          <p className="text-sm text-white leading-tight">
+                            {street}
+                            {isNewLocation(loc.date_added) && <NewBadge className="ml-1.5 align-middle" />}
+                          </p>
                         </button>
                       )
                     })}

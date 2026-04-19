@@ -5,6 +5,7 @@ import NavBar from '@/components/NavBar'
 import { getLocationsFromSheet } from '@/lib/getLocations'
 import { buildItemListSchema } from '@/lib/structuredData'
 import { citySlug } from '@/lib/slug'
+import { isNewLocation } from '@/lib/isNew'
 
 export const revalidate = 300
 
@@ -108,7 +109,14 @@ export default async function CityPage({ params }: { params: Params }) {
               key={loc.id}
               className="bg-white/5 border border-white/10 rounded-lg p-4"
             >
-              <div className="text-white font-semibold">{loc.street}</div>
+              <div className="text-white font-semibold">
+                {loc.street}
+                {isNewLocation(loc.date_added) && (
+                  <span className="ml-2 inline-block text-[10px] font-bold uppercase tracking-wider bg-holiday-red text-white px-1.5 py-0.5 rounded align-middle">
+                    New
+                  </span>
+                )}
+              </div>
               <div className="text-white/50 text-sm">
                 {loc.city}, {loc.state} {loc.zip}
               </div>
