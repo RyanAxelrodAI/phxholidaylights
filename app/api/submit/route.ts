@@ -35,18 +35,24 @@ export async function POST(req: NextRequest) {
 
   // Send Slack notification
   const slackWebhook = process.env.SLACK_WEBHOOK_URL
+  console.log('Slack webhook present:', !!slackWebhook)
   if (slackWebhook) {
     const submitter = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous'
     const emailStr = typeof email === 'string' && email.trim() ? email.trim() : 'Not provided'
     const descStr = typeof description === 'string' && description.trim() ? description.trim() : 'No description'
 
-    await fetch(slackWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: `🎄 *New Holiday Light Submission!*\n*Address:* ${address.trim()}\n*Submitted by:* ${submitter}\n*Email:* ${emailStr}\n*Description:* ${descStr}\n*Review:* ${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.phxholidaylights.com'}/admin?key=${process.env.ADMIN_SECRET_KEY}`,
-      }),
-    }).catch((e) => console.error('Slack error:', e)) // Don't fail the submission if Slack is down
+    try {
+      const slackRes = await fetch(slackWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: `🎄 *New Holiday Light Submission!*\n*Address:* ${address.trim()}\n*Submitted by:* ${submitter}\n*Email:* ${emailStr}\n*Description:* ${descStr}`,
+        }),
+      })
+      console.log('Slack response:', slackRes.status, await slackRes.text())
+    } catch (e) {
+      console.error('Slack error:', e)
+    }
   }
 
   return NextResponse.json({ success: true }, { status: 201 })
