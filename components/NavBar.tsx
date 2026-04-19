@@ -23,7 +23,7 @@ export default function NavBar() {
       {/* Center — title */}
       <Link
         href="/"
-        className="pointer-events-auto flex items-center gap-2 text-black font-bold text-lg tracking-wide hover:opacity-70 transition-opacity"
+        className="pointer-events-auto flex items-center gap-2 text-holiday-red font-bold text-lg tracking-wide hover:opacity-70 transition-opacity"
       >
         <span className="text-2xl">🎄</span>
         <span className="hidden sm:inline">PHX Holiday Lights</span>
