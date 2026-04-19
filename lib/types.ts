@@ -6,6 +6,7 @@ export interface Location {
   lng: number
   verified: boolean
   created_at: string
+  date_added: string | null
 }
 
 export interface Submission {

@@ -66,7 +66,20 @@ function LocationMarker({ location, onClick, selected, onClose, onFeedback }: Ma
                 {location.description}
               </p>
             )}
-            <div className="px-4 py-3 border-t border-white/10">
+            {location.date_added && (
+              <p className="px-4 pb-2 text-xs text-white/40">
+                Added {location.date_added}
+              </p>
+            )}
+            <div className="px-4 py-3 border-t border-white/10 space-y-2">
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${location.lat},${location.lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 w-full text-sm bg-holiday-green hover:bg-holiday-green-light text-white font-medium py-2 px-3 rounded-lg transition-colors"
+              >
+                🗺️ Get Directions
+              </a>
               <button
                 onClick={() => onFeedback(location)}
                 className="w-full text-sm bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-3 rounded-lg transition-colors"

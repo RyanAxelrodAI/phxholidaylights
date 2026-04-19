@@ -1,7 +1,6 @@
 import dynamic from 'next/dynamic'
 import NavBar from '@/components/NavBar'
-import { supabase } from '@/lib/supabase'
-import type { Location } from '@/lib/types'
+import { getLocationsFromSheet } from '@/lib/getLocations'
 
 const MapView = dynamic(() => import('@/components/Map'), {
   ssr: false,
@@ -17,21 +16,8 @@ const MapView = dynamic(() => import('@/components/Map'), {
 
 export const revalidate = 300 // revalidate every 5 minutes
 
-async function getLocations(): Promise<Location[]> {
-  const { data, error } = await supabase
-    .from('locations')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  if (error) {
-    console.error('Failed to load locations:', error.message)
-    return []
-  }
-  return data ?? []
-}
-
 export default async function HomePage() {
-  const locations = await getLocations()
+  const locations = await getLocationsFromSheet()
 
   return (
     <main className="relative w-screen h-screen overflow-hidden">
