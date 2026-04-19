@@ -209,7 +209,7 @@ export default function MapView({ locations }: MapViewProps) {
                 sortedCities.map(city => (
                   <div key={city}>
                     {/* City header */}
-                    <div className="sticky top-0 z-10 px-4 py-2 bg-holiday-dark/95 backdrop-blur border-b border-holiday-green/20 flex items-center justify-between">
+                    <div className="sticky top-0 z-10 px-4 py-1.5 bg-holiday-dark/95 backdrop-blur border-b border-holiday-green/20 flex items-center justify-between">
                       <span className="text-xs font-bold uppercase tracking-widest text-holiday-green/80">{city}</span>
                       <span className="text-xs text-white/30">{groupedByCity[city].length}</span>
                     </div>
@@ -222,19 +222,9 @@ export default function MapView({ locations }: MapViewProps) {
                           key={loc.id}
                           ref={isActive ? activeItemRef : null}
                           onClick={() => handleListClick(loc)}
-                          className={`
-                            w-full text-left px-4 py-2.5 border-b border-white/5
-                            transition-colors
-                            ${isActive
-                              ? 'bg-holiday-green/25 border-l-2 border-l-holiday-green'
-                              : 'hover:bg-white/5'
-                            }
-                          `}
+                          className={`w-full text-left px-4 py-1.5 border-b border-white/10 transition-colors ${isActive ? 'bg-holiday-green/25 border-l-2 border-l-holiday-green' : 'hover:bg-white/5'}`}
                         >
-                          <p className="text-sm text-white leading-snug">{street}</p>
-                          {loc.description && (
-                            <p className="text-xs text-white/45 mt-0.5 line-clamp-1">{loc.description}</p>
-                          )}
+                          <p className="text-sm text-white leading-tight">{street}</p>
                         </button>
                       )
                     })}
