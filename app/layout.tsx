@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="bg-holiday-dark text-white antialiased">
         {children}
       </body>
+      <GoogleAnalytics gaId="G-L5GFHJTTV7" />
     </html>
   )
 }
