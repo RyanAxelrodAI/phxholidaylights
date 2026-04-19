@@ -38,21 +38,24 @@ export async function POST(req: NextRequest) {
   let slackStatus = 'no_webhook_env'
 
   if (slackWebhook) {
+    const webhookUrl = slackWebhook.trim()
     const submitter = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous'
     const emailStr = typeof email === 'string' && email.trim() ? email.trim() : 'Not provided'
     const descStr = typeof description === 'string' && description.trim() ? description.trim() : 'No description'
 
     try {
-      const slackRes = await fetch(slackWebhook, {
+      const slackRes = await fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: `🎄 *New Holiday Light Submission!*\n*Address:* ${address.trim()}\n*Submitted by:* ${submitter}\n*Email:* ${emailStr}\n*Description:* ${descStr}`,
         }),
+        redirect: 'error',
       })
-      slackStatus = `${slackRes.status} ${await slackRes.text()}`
+      const responseText = await slackRes.text()
+      slackStatus = `status:${slackRes.status} url:${webhookUrl.substring(0, 60)} body:${responseText.substring(0, 100)}`
     } catch (e) {
-      slackStatus = `error: ${e}`
+      slackStatus = `error: ${String(e)}`
     }
   }
 
