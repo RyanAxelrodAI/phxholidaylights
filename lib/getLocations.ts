@@ -41,6 +41,10 @@ function parseCSV(text: string): Location[] {
       return {
         id: `sheet-${index}`,
         address,
+        street: street || '',
+        city: city || '',
+        state: state || '',
+        zip: zip || '',
         description: description || null,
         lat,
         lng,

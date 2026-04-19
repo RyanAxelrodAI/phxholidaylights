@@ -1,6 +1,10 @@
 export interface Location {
   id: string
   address: string
+  street: string
+  city: string
+  state: string
+  zip: string
   description: string | null
   lat: number
   lng: number

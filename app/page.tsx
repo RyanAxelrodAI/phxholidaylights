@@ -1,6 +1,8 @@
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import NavBar from '@/components/NavBar'
 import { getLocationsFromSheet } from '@/lib/getLocations'
+import { buildItemListSchema } from '@/lib/structuredData'
 
 const AddToHomeScreen = dynamic(() => import('@/components/AddToHomeScreen'), { ssr: false })
 
@@ -20,20 +22,29 @@ export const revalidate = 300 // revalidate every 5 minutes
 
 export default async function HomePage() {
   const locations = await getLocationsFromSheet()
+  const itemList = buildItemListSchema(locations, 'Phoenix Holiday Light Displays')
 
   return (
     <main className="relative w-screen h-screen overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
+      />
       <NavBar />
       <MapView locations={locations} />
       <AddToHomeScreen />
 
       {/* Bottom pill — location count */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
-        <div className="bg-holiday-dark/85 backdrop-blur border border-holiday-green/40 rounded-full px-4 py-2 text-sm text-white/70 shadow-lg">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+        <Link
+          href="/locations"
+          className="pointer-events-auto bg-holiday-dark/85 backdrop-blur border border-holiday-green/40 rounded-full px-4 py-2 text-sm text-white/70 shadow-lg hover:text-white hover:border-holiday-green transition-colors inline-flex items-center gap-2"
+        >
           {locations.length > 0
             ? `${locations.length} light display${locations.length === 1 ? '' : 's'} mapped`
             : 'No displays yet — be the first to submit!'}
-        </div>
+          <span className="text-white/40">→</span>
+        </Link>
       </div>
     </main>
   )

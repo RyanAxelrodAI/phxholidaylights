@@ -3,17 +3,51 @@ import { GoogleAnalytics } from '@next/third-parties/google'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'PHX Holiday Lights',
-  description: 'Discover the best holiday light displays around Phoenix, AZ. Submit new locations and give feedback on existing ones.',
-  keywords: 'Phoenix holiday lights, Christmas lights Phoenix, AZ holiday displays',
+  title: {
+    default: 'PHX Holiday Lights — Christmas Light Displays in Phoenix, AZ',
+    template: '%s | PHX Holiday Lights',
+  },
+  description:
+    'Interactive map of the best Christmas and holiday light displays across Phoenix, Chandler, Gilbert, Mesa, Scottsdale, and the entire Valley. Submit new locations and share updates.',
+  keywords: [
+    'Phoenix holiday lights',
+    'Christmas lights Phoenix',
+    'Phoenix Christmas light map',
+    'holiday lights Arizona',
+    'Chandler Christmas lights',
+    'Gilbert Christmas lights',
+    'Scottsdale holiday lights',
+    'Mesa Christmas lights',
+    'AZ holiday displays',
+  ],
   metadataBase: new URL('https://phxholidaylights.com'),
+  alternates: {
+    canonical: 'https://phxholidaylights.com',
+  },
   openGraph: {
-    title: 'PHX Holiday Lights',
-    description: 'Find & share the best holiday light displays in Phoenix, AZ.',
+    title: 'PHX Holiday Lights — Christmas Light Displays in Phoenix, AZ',
+    description:
+      'Find & share the best holiday light displays across the Phoenix metro area.',
     url: 'https://phxholidaylights.com',
     siteName: 'PHX Holiday Lights',
     locale: 'en_US',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PHX Holiday Lights',
+    description:
+      'Interactive map of the best Christmas light displays across the Phoenix metro area.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
   manifest: '/manifest.json',
   appleWebApp: {
