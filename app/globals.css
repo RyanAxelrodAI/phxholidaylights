@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#__next {
+  height: 100%;
+}
+
+/* Google Maps info window reset */
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+}
+.gm-style .gm-style-iw-tc::after {
+  background: #1a5c2a;
+}
+
+/* Custom marker pin */
+.holiday-marker {
+  font-size: 28px;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+  transition: transform 0.15s ease;
+  user-select: none;
+}
+.holiday-marker:hover {
+  transform: scale(1.2);
+}
