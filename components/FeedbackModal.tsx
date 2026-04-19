@@ -30,6 +30,7 @@ export default function FeedbackModal({ location, onClose }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           location_id: location.id,
+          location_address: location.address,
           type,
           message: message.trim() || null,
           submitted_by: name.trim() || null,
