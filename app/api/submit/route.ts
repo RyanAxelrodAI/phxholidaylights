@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
 
   // Send Slack notification
   const slackWebhook = process.env.SLACK_WEBHOOK_URL
-  console.log('Slack webhook present:', !!slackWebhook)
+  let slackStatus = 'no_webhook_env'
+
   if (slackWebhook) {
     const submitter = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous'
     const emailStr = typeof email === 'string' && email.trim() ? email.trim() : 'Not provided'
@@ -49,11 +50,11 @@ export async function POST(req: NextRequest) {
           text: `🎄 *New Holiday Light Submission!*\n*Address:* ${address.trim()}\n*Submitted by:* ${submitter}\n*Email:* ${emailStr}\n*Description:* ${descStr}`,
         }),
       })
-      console.log('Slack response:', slackRes.status, await slackRes.text())
+      slackStatus = `${slackRes.status} ${await slackRes.text()}`
     } catch (e) {
-      console.error('Slack error:', e)
+      slackStatus = `error: ${e}`
     }
   }
 
-  return NextResponse.json({ success: true }, { status: 201 })
+  return NextResponse.json({ success: true, slackStatus }, { status: 201 })
 }
