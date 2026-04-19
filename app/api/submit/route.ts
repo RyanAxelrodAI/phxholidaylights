@@ -1,5 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
+import https from 'https'
+
+function postToSlack(webhookUrl: string, text: string): Promise<string> {
+  return new Promise((resolve) => {
+    const payload = JSON.stringify({ text })
+    const url = new URL(webhookUrl)
+
+    const options = {
+      hostname: url.hostname,
+      path: url.pathname,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+      },
+    }
+
+    const req = https.request(options, (res) => {
+      let data = ''
+      res.on('data', (chunk) => { data += chunk })
+      res.on('end', () => resolve(`${res.statusCode} ${data}`))
+    })
+
+    req.on('error', (e) => resolve(`error: ${e.message}`))
+    req.write(payload)
+    req.end()
+  })
+}
 
 export async function POST(req: NextRequest) {
   let body: unknown
@@ -42,21 +70,9 @@ export async function POST(req: NextRequest) {
     const submitter = typeof name === 'string' && name.trim() ? name.trim() : 'Anonymous'
     const emailStr = typeof email === 'string' && email.trim() ? email.trim() : 'Not provided'
     const descStr = typeof description === 'string' && description.trim() ? description.trim() : 'No description'
+    const text = `🎄 *New Holiday Light Submission!*\n*Address:* ${address.trim()}\n*Submitted by:* ${submitter}\n*Email:* ${emailStr}\n*Description:* ${descStr}`
 
-    try {
-      const slackRes = await fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: `🎄 *New Holiday Light Submission!*\n*Address:* ${address.trim()}\n*Submitted by:* ${submitter}\n*Email:* ${emailStr}\n*Description:* ${descStr}`,
-        }),
-        redirect: 'error',
-      })
-      const responseText = await slackRes.text()
-      slackStatus = `status:${slackRes.status} url:${webhookUrl.substring(0, 60)} body:${responseText.substring(0, 100)}`
-    } catch (e) {
-      slackStatus = `error: ${String(e)}`
-    }
+    slackStatus = await postToSlack(webhookUrl, text)
   }
 
   return NextResponse.json({ success: true, slackStatus }, { status: 201 })
