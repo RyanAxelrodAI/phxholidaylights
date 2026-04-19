@@ -149,6 +149,18 @@ export default function MapView({ locations }: MapViewProps) {
     (loc.description ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
+  // Group by city (address format: "street, city, state zip")
+  const getCity = (address: string) => address.split(', ')[1] ?? 'Other'
+
+  const groupedByCity = filtered.reduce<Record<string, Location[]>>((acc, loc) => {
+    const city = getCity(loc.address)
+    if (!acc[city]) acc[city] = []
+    acc[city].push(loc)
+    return acc
+  }, {})
+
+  const sortedCities = Object.keys(groupedByCity).sort()
+
   return (
     <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}>
       <div className="w-full h-full flex">
@@ -194,32 +206,40 @@ export default function MapView({ locations }: MapViewProps) {
               {filtered.length === 0 ? (
                 <p className="text-white/40 text-sm text-center mt-8 px-4">No locations match your search.</p>
               ) : (
-                filtered.map(loc => {
-                  const isActive = selectedLocation?.id === loc.id
-                  return (
-                    <button
-                      key={loc.id}
-                      ref={isActive ? activeItemRef : null}
-                      onClick={() => handleListClick(loc)}
-                      className={`
-                        w-full text-left px-4 py-3 border-b border-white/5
-                        transition-colors
-                        ${isActive
-                          ? 'bg-holiday-green/30 border-l-2 border-l-holiday-green'
-                          : 'hover:bg-white/5'
-                        }
-                      `}
-                    >
-                      <p className="text-sm text-white font-medium leading-snug">{loc.address}</p>
-                      {loc.description && (
-                        <p className="text-xs text-white/50 mt-0.5 line-clamp-1">{loc.description}</p>
-                      )}
-                      {loc.date_added && (
-                        <p className="text-xs text-white/30 mt-0.5">Added {loc.date_added}</p>
-                      )}
-                    </button>
-                  )
-                })
+                sortedCities.map(city => (
+                  <div key={city}>
+                    {/* City header */}
+                    <div className="sticky top-0 z-10 px-4 py-2 bg-holiday-dark/95 backdrop-blur border-b border-holiday-green/20 flex items-center justify-between">
+                      <span className="text-xs font-bold uppercase tracking-widest text-holiday-green/80">{city}</span>
+                      <span className="text-xs text-white/30">{groupedByCity[city].length}</span>
+                    </div>
+                    {/* Locations under this city */}
+                    {groupedByCity[city].map(loc => {
+                      const isActive = selectedLocation?.id === loc.id
+                      const street = loc.address.split(', ')[0]
+                      return (
+                        <button
+                          key={loc.id}
+                          ref={isActive ? activeItemRef : null}
+                          onClick={() => handleListClick(loc)}
+                          className={`
+                            w-full text-left px-4 py-2.5 border-b border-white/5
+                            transition-colors
+                            ${isActive
+                              ? 'bg-holiday-green/25 border-l-2 border-l-holiday-green'
+                              : 'hover:bg-white/5'
+                            }
+                          `}
+                        >
+                          <p className="text-sm text-white leading-snug">{street}</p>
+                          {loc.description && (
+                            <p className="text-xs text-white/45 mt-0.5 line-clamp-1">{loc.description}</p>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                ))
               )}
             </div>
           </div>
