@@ -10,7 +10,6 @@ import {
   useMap,
 } from '@vis.gl/react-google-maps'
 import type { Location } from '@/lib/types'
-import { isNewLocation } from '@/lib/isNew'
 import FeedbackModal from './FeedbackModal'
 
 function NewBadge({ className = '' }: { className?: string }) {
@@ -111,7 +110,7 @@ function LocationMarker({ location, onClick, selected, onClose, onFeedback, dist
               <div>
                 <p className="text-sm font-semibold leading-snug">
                   {location.address}
-                  {isNewLocation(location.date_added) && <NewBadge className="ml-1.5 align-middle" />}
+                  {location.isNew && <NewBadge className="ml-1.5 align-middle" />}
                 </p>
                 {distanceLabel && (
                   <p className="text-xs text-white/60 mt-0.5">📏 {distanceLabel}</p>
@@ -122,9 +121,6 @@ function LocationMarker({ location, onClick, selected, onClose, onFeedback, dist
               <p className="px-4 py-3 text-sm text-white/80 leading-relaxed border-t border-white/10">
                 {location.description}
               </p>
-            )}
-            {location.date_added && (
-              <p className="px-4 pb-2 text-xs text-white/40">Added {location.date_added}</p>
             )}
             <div className="px-4 py-3 border-t border-white/10 space-y-2">
               <a
@@ -336,7 +332,7 @@ export default function MapView({ locations }: MapViewProps) {
                         <div>
                           <p className="text-sm text-white leading-tight">
                             {street}
-                            {isNewLocation(loc.date_added) && <NewBadge className="ml-1.5 align-middle" />}
+                            {loc.isNew && <NewBadge className="ml-1.5 align-middle" />}
                           </p>
                           <p className="text-xs text-white/40 mt-0.5">{city}</p>
                         </div>
@@ -369,7 +365,7 @@ export default function MapView({ locations }: MapViewProps) {
                         >
                           <p className="text-sm text-white leading-tight">
                             {street}
-                            {isNewLocation(loc.date_added) && <NewBadge className="ml-1.5 align-middle" />}
+                            {loc.isNew && <NewBadge className="ml-1.5 align-middle" />}
                           </p>
                         </button>
                       )

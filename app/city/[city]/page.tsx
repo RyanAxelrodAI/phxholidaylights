@@ -5,7 +5,6 @@ import NavBar from '@/components/NavBar'
 import { getLocationsFromSheet } from '@/lib/getLocations'
 import { buildItemListSchema } from '@/lib/structuredData'
 import { citySlug } from '@/lib/slug'
-import { isNewLocation } from '@/lib/isNew'
 
 export const revalidate = 300
 
@@ -111,7 +110,7 @@ export default async function CityPage({ params }: { params: Params }) {
             >
               <div className="text-white font-semibold">
                 {loc.street}
-                {isNewLocation(loc.date_added) && (
+                {loc.isNew && (
                   <span className="ml-2 inline-block text-[10px] font-bold uppercase tracking-wider bg-holiday-red text-white px-1.5 py-0.5 rounded align-middle">
                     New
                   </span>
@@ -122,9 +121,6 @@ export default async function CityPage({ params }: { params: Params }) {
               </div>
               {loc.description && (
                 <p className="text-white/70 text-sm mt-2">{loc.description}</p>
-              )}
-              {loc.date_added && (
-                <p className="text-white/40 text-xs mt-2">Added {loc.date_added}</p>
               )}
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}`}

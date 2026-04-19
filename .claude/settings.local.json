@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm install *)",
       "Read(//Users/ryan/**)",
-      "Bash(osascript -e 'tell app \"Finder\" to set folderPath to POSIX path of \\(choose folder with prompt \"Choose where to save PHX Holiday Lights project:\"\\)')"
+      "Bash(osascript -e 'tell app \"Finder\" to set folderPath to POSIX path of \\(choose folder with prompt \"Choose where to save PHX Holiday Lights project:\"\\)')",
+      "Bash(npm run *)"
     ]
   }
 }

@@ -4,7 +4,6 @@ import NavBar from '@/components/NavBar'
 import { getLocationsFromSheet } from '@/lib/getLocations'
 import { buildItemListSchema } from '@/lib/structuredData'
 import { citySlug } from '@/lib/slug'
-import { isNewLocation } from '@/lib/isNew'
 
 export const revalidate = 300
 
@@ -86,7 +85,7 @@ export default async function LocationsPage() {
                   <li key={loc.id} className="border-b border-white/5 pb-2">
                     <div className="text-white/95 text-sm font-medium">
                       {loc.street}
-                      {isNewLocation(loc.date_added) && (
+                      {loc.isNew && (
                         <span className="ml-1.5 inline-block text-[9px] font-bold uppercase tracking-wider bg-holiday-red text-white px-1.5 py-0.5 rounded align-middle">
                           New
                         </span>

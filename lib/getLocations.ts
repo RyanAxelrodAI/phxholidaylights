@@ -30,13 +30,14 @@ function parseCSV(text: string): Location[] {
       }
       fields.push(current.trim())
 
-      const [street, city, state, zip, description, date_added, latStr, lngStr] = fields
+      const [street, city, state, zip, description, newFlag, latStr, lngStr] = fields
       const lat = parseFloat(latStr)
       const lng = parseFloat(lngStr)
 
       if (!street || isNaN(lat) || isNaN(lng)) return null
 
       const address = `${street}, ${city}, ${state} ${zip}`.trim()
+      const isNew = /^(yes|y|true|1)$/i.test((newFlag || '').trim())
 
       return {
         id: `sheet-${index}`,
@@ -50,7 +51,7 @@ function parseCSV(text: string): Location[] {
         lng,
         verified: true,
         created_at: new Date().toISOString(),
-        date_added: date_added?.trim() || null,
+        isNew,
       } as Location
     })
     .filter((loc): loc is Location => loc !== null)
