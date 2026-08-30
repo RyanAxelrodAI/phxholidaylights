@@ -46,6 +46,17 @@ export default async function HomePage() {
           <span className="text-white/40">→</span>
         </Link>
       </div>
+
+      {/* The map is full-screen with no footer, so the policy link lives in a corner.
+          The site runs analytics and collects submissions, so it has to be reachable. */}
+      <div className="absolute bottom-2 right-3 z-10">
+        <a
+          href="/privacy"
+          className="text-[10px] text-white/35 hover:text-white/70 underline underline-offset-2 transition-colors"
+        >
+          Privacy
+        </a>
+      </div>
     </main>
   )
 }
