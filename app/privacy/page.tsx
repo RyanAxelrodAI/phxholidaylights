@@ -73,7 +73,7 @@ const BODY = `<p class="meta">Last updated: August 28, 2026</p>
       <h2>Contact us</h2>
       <p>Ryan Melville</p>
       <p>2077 E. Warner Rd., Ste. 110, Tempe, AZ 85284</p>
-      <p>Phone: 480-725-6331</p>`;
+      <p>Phone: 480-447-0695</p>`;
 
 export default function Page() {
   return (
