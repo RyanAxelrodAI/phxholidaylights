@@ -1,22 +1,8 @@
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import NavBar from '@/components/NavBar'
+import MapShell from '@/components/MapShell'
 import { getLocationsFromSheet } from '@/lib/getLocations'
 import { buildItemListSchema } from '@/lib/structuredData'
-
-const AddToHomeScreen = dynamic(() => import('@/components/AddToHomeScreen'), { ssr: false })
-
-const MapView = dynamic(() => import('@/components/Map'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-holiday-dark">
-      <div className="text-center">
-        <div className="text-5xl animate-pulse mb-3">🎄</div>
-        <p className="text-white/50 text-sm">Loading map…</p>
-      </div>
-    </div>
-  ),
-})
 
 export const revalidate = 300 // revalidate every 5 minutes
 
@@ -31,8 +17,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemList) }}
       />
       <NavBar />
-      <MapView locations={locations} />
-      <AddToHomeScreen />
+      <MapShell locations={locations} />
 
       {/* Bottom pill — location count */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">

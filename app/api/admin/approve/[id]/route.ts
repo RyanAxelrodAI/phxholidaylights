@@ -3,9 +3,15 @@ import { createAdminClient } from '@/lib/supabase'
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  // Next 15: params is a Promise and must be awaited.
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  if (req.headers.get('x-admin-key') !== process.env.ADMIN_SECRET_KEY) {
+  // Explicitly require the secret to EXIST. This route already failed closed
+  // (headers.get() returns null and `null !== undefined` is true), but relying on
+  // that is fragile; app/admin/page.tsx had the same shape and did NOT fail closed.
+  const { id } = await params
+  const adminKey = process.env.ADMIN_SECRET_KEY
+  if (!adminKey || req.headers.get('x-admin-key') !== adminKey) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -15,7 +21,7 @@ export async function POST(
   const { data: sub, error: fetchError } = await admin
     .from('submissions')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('status', 'pending')
     .single()
 
@@ -32,7 +38,7 @@ export async function POST(
       lng: sub.lng,
       verified: true,
     }),
-    admin.from('submissions').update({ status: 'approved' }).eq('id', params.id),
+    admin.from('submissions').update({ status: 'approved' }).eq('id', id),
   ])
 
   if (insertError || updateError) {

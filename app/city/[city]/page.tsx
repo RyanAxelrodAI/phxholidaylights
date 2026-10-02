@@ -27,9 +27,11 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata(
-  { params }: { params: Params }
+  // Next 15: params is a Promise and must be awaited.
+  { params }: { params: Promise<Params> }
 ): Promise<Metadata> {
-  const data = await getCityData(params.city)
+  const { city } = await params
+  const data = await getCityData(city)
   if (!data) return { title: 'City not found' }
 
   const { cityName, locations } = data
@@ -42,14 +44,15 @@ export async function generateMetadata(
     title,
     description,
     alternates: {
-      canonical: `https://phxholidaylights.com/city/${params.city}`,
+      canonical: `https://phxholidaylights.com/city/${city}`,
     },
     openGraph: { title, description, type: 'website' },
   }
 }
 
-export default async function CityPage({ params }: { params: Params }) {
-  const data = await getCityData(params.city)
+export default async function CityPage({ params }: { params: Promise<Params> }) {
+  const { city } = await params
+  const data = await getCityData(city)
   if (!data) notFound()
 
   const { cityName, locations } = data
